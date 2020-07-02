@@ -226,6 +226,141 @@ class Getch_Windows:
 #             termios.tcsetattr(fd, termios.TCSADRAIN, old)
 #         return passwd
 
-
-
+class mysql:
+    def __init__(self):
+        pass
+    ## 创建mysql连接
+    def connet(self):
+        '''
+        创建mysql连接
+        '''
+        import pymysql
+        try:
+            connection = pymysql.connect(host = '192.168.13.57', 
+                                                        port = 3306,   
+                                                        user = 'root', 
+                                                        passwd = '123456', 
+                                                        db = 'woniuATM', 
+                                                        charset = 'utf8', 
+                                                        cursorclass = pymysql.cursors.DictCursor)
+            cursor = connection.cursor()
+        except Exception as e:
+            print('数据库连接失败！' + e)
+            return False
+        finally:
+            return cursor, connection
+    def select_oneback(self, select: str) -> str:
+        '''
+        执行一条select语句，并返回一行结果
+        '''
+        import pymysql
+        try:
+            cursor, connection = self.connet()
+            cursor.execute(select)
+            fetone = cursor.fetchone()
+            return fetone
+        except:
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+    ## 执行一条select
+    def select_allback(self, select: str) -> dict:
+        '''
+        执行一条select语句，并返回所有结果
+        '''
+        import pymysql
+        try:
+            cursor, connection = self.connet()
+            cursor.execute(select)
+            fetall = cursor.fetchall()
+            return fetall
+        except:
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+    def insert_IDback(self, ins: str) -> int:
+        '''
+        执行一条insert语句，并返回插入的行号
+        '''
+        import pymysql
+        try:
+            cursor, connection = self.connet()
+            cursor.execute(ins)
+            connection.commit()
+            insertid = int(cursor.lastrowid)
+            return insertid
+        except:
+            connection.rollback()
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+    def update_noback(self, up: str) -> bool:
+        '''
+        执行一条update语句，返回是否成功
+        '''
+        import pymysql
+        try:
+            cursor, connection = self.connet()
+            cursor.execute(up)
+            connection.commit()
+            return True
+        except:
+            connection.rollback()
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+    def create_noback(self, create: str) -> bool:
+        '''
+        执行一条create语句，返回是否成功
+        '''
+        import pymysql
+        try:
+            cursor, connection = self.connet()
+            cursor.execute(create)
+            connection.commit()
+            return True
+        except:
+            connection.rollback()
+            return False
+        finally:
+            cursor.close()
+            connection.close()
+    def set_default(self):
+        '''
+        创建初始用户信息
+        '''
+        import pymysql
+        create_1 = '''
+        create table if not exists userinfo(
+        id int auto_increment primary key,
+        account char(5) unique not null,
+        name varchar(20) not null,
+        passwd char(32) not null,
+        phone char(11) not null,
+        balance double not null
+        )engine=innodb character set utf8;
+        '''
+        create_2 = '''
+        create table if not exists record(
+        id int auto_increment primary key,
+        account char(5) unique not null,
+        dt datetime not null,
+        event char(4) not null,
+        money double,
+        targetaccount char(5),
+        curbalance double
+        )engine=innodb character set utf8;
+        '''
+        insert_1 = '''
+        insert into userinfo(account, name, passwd, phone, balance) values('10001', 'admin', '0192023a7bbd73250516f069df18b500', '13880872992', 5000000.0),
+         ('10002', '黄俊', 'e10adc3949ba59abbe56e057f20f883e', '13880872992', 1000000.0),
+         ('10003', 'guest', 'fcf41657f02f88137a1bcf068a32c0a3', '13880872992', 500000.0);
+        '''
+        self.create_noback(create_1)
+        self.create_noback(create_2)
+        self.insert_IDback(insert_1)
 

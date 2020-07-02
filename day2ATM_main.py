@@ -52,21 +52,19 @@ if __name__ == '__main__':  # 程序主入口
         else:   # 高级账户
             super_user = atmfunction.login(first_choice)
             if super_user == 1:
-                from atmclass import Foperate
+                from atmclass import Jsonoperate
                 filename = r'.\user.info'
                 print('以下是本机注册所有账户信息！')
-                print(atmfunction.id_docker(Foperate(filename).fread()))
-                print(atmfunction.name_docker(Foperate(filename).fread()))
-                print(atmfunction.passwd_docker(Foperate(filename).fread()))
-                print(atmfunction.balance_docker(Foperate(filename).fread()))
+                print(atmfunction.id_docker(Jsonoperate(filename).jread()))
+                print(atmfunction.name_docker(Jsonoperate(filename).jread()))
+                print(atmfunction.passwd_docker(Jsonoperate(filename).jread()))
+                print(atmfunction.balance_docker(Jsonoperate(filename).jread()))
                 print('5s后返回主菜单，请及时确认！')
                 time.sleep(5)
             else:
                 print('你在试什么呢？净瞎整，老老实实登录去......')
                 time.sleep(3)
+
     os.system('cls')
     print('\n已退出程序，欢迎您再次使用WoniuATM~~~\n')
-
-
-
 

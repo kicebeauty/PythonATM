@@ -148,7 +148,7 @@ def login(super_user: str = 'default') -> object:
     elif super_user == 'super':
         super_user_name = input('请输入super用户名：')
         super_user_passwd = pwd_input('请输入super密码：')
-        if super_user_name == 'admin' and encrypt(super_user_passwd) == '213f2807cf903ce63407c11d8f0f57fe':   # 无聊写的，没有加密，存在super账户泄露风险
+        if super_user_name == 'admin' and encrypt(super_user_passwd) == '213f2807cf903ce63407c11d8f0f57fe':   # 
             print('\n超级用户登录，欢迎您，superuser！')
             return 1
     else:

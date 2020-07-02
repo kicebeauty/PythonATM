@@ -112,20 +112,19 @@ def login(super_user: str = 'default') -> object:
     if super_user == 'default':
         usrtime, pwdtime = 3, 3 # 账户名最多3次尝试，密码最多3次尝试
         while usrtime:  # 账户名输入3次判定
-            user = input('请输入5位数账户号（输入exit退回主界面）：')  #提示输入密码
+            user = input('请输入5位数账户号（输入exit退回主界面）：')  #提示输入账号
             if user == 'exit':
                 break
             elif user in id_info: # 判断输入是否存在于用户名列表中
                 usrtime = 0 # 输入正确，不再循环输入用户名，取消下次循环
                 while pwdtime:  #密码输入3次判定
-                    pwd = pwd_input('请输入密码：')
-                    # 由于写入算法将 ’ 单引号替换了，此处也许替换
+                    pwd = pwd_input('请输入密码：')     # 提示输入密码
                     if encrypt(pwd) == passwd_info[id_info.index(user)]: # 用户名对应密码检测
                         print('正在核对账户信息，请稍后......')
                         time.sleep(2)
                         print('登录成功，欢迎你，%s\n' % user)
                         Statement(spath).pwappend(user_info[id_info.index(user)].query_id(), '登录成功')
-                        pwdtime = 0 # 登录成功，取消下次密码输入循环
+                        # pwdtime = 0 # 登录成功，取消下次密码输入循环
                         return user_info[id_info.index(user)] # 登录成功，返回登录的对象
                     else:
                         pwdtime -= 1    # 密码循环输入计数器减一
@@ -133,8 +132,8 @@ def login(super_user: str = 'default') -> object:
                             print('密码输入错误达到三次，程序终止！')
                             Statement(spath).pwappend(user_info[id_info.index(user)].query_id(), '尝试登录失败，密码输入错误达到三次')
                             return # 三次密码输入错误，登录失败，不返回登录的对象
-                        count = input('密码错误，是否重新输入？（输入 1 以继续，其他任意键退出：）')  #  提供用户提前退卡功能
-                        if count == '1':
+                        count = input('密码错误，是否重新输入？（输入 0退出，其他任意键继续：）')  #  提供用户提前退卡功能
+                        if count != '0':
                             pass
                         else:
                             print('程序已退出！')
@@ -247,6 +246,31 @@ def menu_4(user_obj: object) -> None:
             print('不支持本账户自转或目标账户不存在，请确认后重新输入~')
             continue
 
+def query_journal_time(i: str) -> str:
+    return i.split('\t')[1].split(' ')[0]
+def query_journal(user_obj: object) -> None:
+    journal_path = spath + user_obj.query_id() + '.dat'
+    start_time = input('请输入起始年月日（格式YYYY-MM-DD，不输入则直接按回车）：')
+    end_time = input('请输入结束年月日（格式YYYY-MM-DD，不输入则直接按回车）：')
+    print('\n')
+    with open(journal_path, 'r', encoding='utf8') as f:
+        if start_time == '' and end_time == '':     # 不输入默认显示最后10行
+            i = ''.join([i for i in f.readlines()[-10:]])
+            print(i)
+        elif start_time == '' and end_time != '':       # 输入起始时间，不输入结束时间，默认结束到当日
+            for i in f.readlines():
+                if start_time <= query_journal_time(i):
+                    print(i, end='')
+        elif start_time != '' and end_time == '':       # 输入结束时间，不输入起始时间，默认最开始到结束时间所有日志
+            for i in f.readlines():
+                if query_journal_time(i) <= end_time:
+                    print(i, end='')
+        elif start_time == '' and end_time == '':
+            for i in f.readlines():     # 时间都输入，则正确显示期间所有日志
+                if start_time <= query_journal_time(i) <= end_time:
+                    print(i, end='')
+        else:
+            print('您输入的时间范围内，没有可以显示的内容......')
 
 def menu(user_obj: object) -> None:
     os.system('cls')
@@ -264,9 +288,7 @@ def menu(user_obj: object) -> None:
         elif choice == '4':
             menu_4(user_obj)
         elif choice == '5':
-            with open(spath + user_obj.query_id() + '.dat', 'r', encoding='utf8') as f:
-                journal = f.readlines()
-                print(''.join(journal))
+            query_journal(user_obj)
         elif choice == '6':
             break
         elif choice == '7':   # 用户选择退出系统

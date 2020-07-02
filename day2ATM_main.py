@@ -15,7 +15,7 @@ if __name__ == '__main__':  # 程序主入口
         print('*' * 20 + ' 欢迎来到WoniuATM ' + '*' * 20)
         print('*' * 21 + ' 请选择操作菜单 ' + '*' * 21)
         print('*' * 7 + ' 1：注册   2：登录    3：退卡   4：修改密码 ' + '*' * 7)
-        global user
+        # global user
         user_exist = False
         first_choice = input('请输入你的操作选项：')
         # 进入注册流程，注册后将更新info表

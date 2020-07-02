@@ -153,7 +153,6 @@ def login(super_user: str = 'default') -> object:
             return 1
     else:
         print('恭喜您，发现新大陆！但是你输入的参数有误。')
-        time.sleep(3)
 
 def menu_1(user_obj: object) -> str:
     Statement(spath).pwappend(user_obj.query_id(), '查询账户余额')

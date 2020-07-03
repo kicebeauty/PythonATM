@@ -1,181 +1,84 @@
-## 定义用户类
-class Account:
-    def __init__(self, idnum: int,name: str, passwd: str, balance: float):
-        self.idnum = idnum
-        self.name = name
-        self.passwd = passwd
-        self.balance = float(balance)
-    def take_money(self, money: float) -> None:
-        self.balance = (self.balance / 1000 - float(money)) * 1000
-    def save_money(self, money: float) -> None:
-        self.balance = (self.balance / 1000 + float(money)) * 1000
-    def query_balance(self) -> float:
-        return (self.balance) / 1000
-    def query_id(self) -> int:
-        return self.idnum
-    def query_name(self) -> str:
-        return self.name
-    def query_passwd(self) -> str:
-        return self.passwd
-    def query_dict(self) -> dict:
-        dic = {}
-        dic[self.idnum] = [self.name, self.passwd, self.balance]
-        return dic
-    def __str__(self) -> str:  # 当需要对象作为str类型时，将返回以下字符串
-        return '账户号：' + str(self.idnum) + '，' + '用户名：' + self.name  + '，' + '密码：***'  + '，' + '余额：' + str(self.balance)
-# 使用Add_User进行列表的对象构造
-## Python不支持重载构造函数
-class Add_User(Account):
-    def __init__(self, dic: dict):
-        for key, value in dic.items():
-            pass
-        super().__init__(key, value[0], value[1], value[2])
-
 ## 业务流水
 class Statement:
-    def __init__(self, spath: str):
-        import os
-        self.spath = spath
-        if 'statement' in os.listdir(os.path.dirname(__file__)):
-            pass
-        else:
-            os.mkdir(self.spath)
-    ## 密码修改日志
-    def pwappend(self, account: str, result: str) -> None:
-        import time
-        with open(self.spath + account + '.dat', 'a', encoding='utf8') as pwf:
-            time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            pwf.write(f'账号：{account}\t{time_str}\t{result}\n')
-    ## 余额变更日志
-    def balappend(self, account: str, operation: str, balchange: str, balance: str, sfile: str) -> None:
-        import time
-        if operation == '存入：':
-            symb = '+'
-        elif operation == '取出：':
-            symb = '-'
-        with open(self.spath + account + '.dat', 'a', encoding='utf8') as pwf:
-            time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            pwf.write(f'账号：{account}\t{time_str}\t{operation}{symb}{balchange}元\t当前余额：{balance}\n')
-    def transbal(self, account: str, target_account: str, operation: str, trans_type: str, trans_balance: str, balance: str):
-        import time
-        with open(self.spath + account + '.dat', 'a', encoding='utf8') as pwf:
-            time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            pwf.write(f'账号：{account}\t{time_str}\t{operation}{trans_balance}元\t{trans_type}{target_account}\t当前余额：{balance}\n')
-    ## 余额变更错误日志
-    def balerror(self, account: str, operation: str):
-        import time
-        with open(self.spath + account + '.dat', 'a', encoding='utf8') as pwf:
-            time_str = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
-            pwf.write(f'账号：{account}\t{time_str}\t{operation}失败\n')
-        
-
-## 文件读取，将字典分别转换为不同用途的列表
-class Dict2List:
     def __init__(self):
         pass
-    #将所有对象按info的顺序添加到容器中
-    def user(self, info: dict) -> list:
-        user = []
-        dic = {}
-        for i in info: 
-            dic[i] = info[i]
-            user.append(Add_User(dic))
-        return user
-    # 获取账户ID，添加到用户名列表：
-    def idnum(self, info: dict) -> list:
-        idnum = [i for i in info]
-        return idnum
-    # 获取用户姓名，添加到用户名列表：
-    def name(self, info: dict) -> list:
-        name = [self.user(info)[i].query_name() for i in range(len(info))]
-        return name
-    # 获取密码，添加到密码列表：
-    def passwd(self, info: dict) -> list:
-        passwd = [self.user(info)[i].query_passwd() for i in range(len(info))]
-        return passwd
-    # 获取余额，添加到余额列表：
-    def balance(self, info: dict) -> list:
-        balance = [self.user(info)[i].query_balance() for i in range(len(info))]
-        return balance
-
-## json配置文件读取、写入类方法
-class Jsonoperate:
-    '''
-    传入文件地址，调用jread()方法读取json文件，返回全量字典
-    调用jwrite()方法将字典写入到json文件
-    '''
-    def __init__(self, jpath):
-        self.jpath = jpath
-    def jread(self) -> dict:
-        import json, time
-        from pathlib import Path
-        cwd = Path.cwd()
-        jsonfile = Path.joinpath(cwd, 'userinfo.json')
-        if jsonfile.exists() and jsonfile.stat().st_size > 100:
-            jsondict = json.load(open(self.jpath, 'r', encoding='utf8'))
-            return jsondict
+    ## 事件日志，传入用户id和
+    def eventappend(self, user_id: str, event: str) -> bool:
+        import time
+        curtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        sql = '''insert into log(account, dt, event) values('%s', '%s', '%s');'''
+        n = Mysql().insert_IDback(sql % (user_id, curtime, event))
+        if n != 0:
+            return True
         else:
-            print('userinfo.json文件错误，正在恢复出厂配置......')
-            time.sleep(3)
-            default_info = {'10001': ['admin', '0192023a7bbd73250516f069df18b500', 5000000.00], 
-                                '10002': ['黄俊', 'e10adc3949ba59abbe56e057f20f883e', 1000000.00], 
-                                '10003': ['guest', 'fcf41657f02f88137a1bcf068a32c0a3', 500000.00]}
-            self.jwrite(default_info)
-            return default_info
-    def jwrite(self, info: dict):
-        import json
-        json.dump(info, open(self.jpath, 'w', encoding='utf8'), ensure_ascii=False, indent=1)
-
-## 密码或余额变动类方法
-class Change:
-    def __init__(self, jpath: str): ## 需传入用户信息文件地址接口
-        self.jpath = jpath
-    ## 密码修改写入
-    def pw(self, user_id: str, new_passwd: str) -> None: 
-        from atmfunction import encrypt
-        try:
-            info = Jsonoperate(self.jpath).jread()
-            check = [i for i in info]
-            for i in check:
-                if user_id == i:
-                    info[i][1] = encrypt(new_passwd)
-            print(info)
-            Jsonoperate(self.jpath).jwrite(info)
-            info_check = Jsonoperate(self.jpath).jread()    ## 检查密码是否真实写入
-            if info_check[user_id][1] == encrypt(new_passwd):
-                print('修改密码成功，请重新登录！')
-                return 'success'
-            else:
-                print('数据写入错误，请稍后再试......')
-                return 'failure'
-        except:
-            print('数据写入错误，请联系黄俊......\n')
-    ## 余额修改写入
-    def bal(self, user_id: str, balance: float) -> None:
-        try:
-            info = Jsonoperate(self.jpath).jread()
-            check = [i for i in info]
-            for i in range(len(info)):
-                if user_id == check[i]:
-                    info[check[i]][2] = balance
-            Jsonoperate(self.jpath).jwrite(info)
-            if info[user_id][2] == balance:
-                return 'success'
-            else:
-                return 'failure'
-        except:
-            print('数据写入错误，请联系黄俊......\n')
-    def bal_check(self, account: str, right_value: str) -> bool: 
+            return False
+    ## 余额变更日志
+    def balappend(self, *args) -> None:
         '''
-        left_value为文件中读取的值
-        right_value为需要对比的值
+        参数列表顺序：用户id，事件，变更金额，当前余额
         '''
-        left_value = Jsonoperate(self.jpath).jread()[account][2]
-        if left_value == right_value:
+        import time
+        curtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        sql = '''insert into record(account, dt, event, money, curbalance) values('%s', '%s', '%s', %f, %f);'''
+        n = Mysql().insert_IDback(sql % (args[0], curtime, args[1], args[2], args[3]))
+        if n != 0:
+            return True
+        else:
+            return False
+    def transbal(self, *args):
+        '''
+        参数列表顺序：账户id，事件名，变更金额，目标/来源，目标账户id，当前余额
+        '''
+        import time
+        curtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        sql = '''insert into transrecord(account, dt, event, type, taraccount, money, curbalance) values('%s', '%s', '%s', '%s', '%s', %f, %f);'''
+        n = Mysql().insert_IDback(sql % (args[0], curtime, args[1], args[2], args[3], args[4], args[5]))
+        if n != 0:
+            return True
+        else:
+            return False
+    ## 余额变更错误日志
+    def balerror(self, user_id: str, event: str) -> bool:
+        '''
+        参数列表顺序：账户id，变动金额，事件名
+        '''
+        import time
+        curtime = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+        sql = '''insert into log(account, dt, event) values(%s, %s, %s, %f);'''
+        n = Mysql().insert_IDback(sql % (user_id, curtime, event))
+        if n != 0:
             return True
         else:
             return False
 
+## 数据库数据更新类
+class DBChange:
+    def __init__(self):
+        pass
+    def pw(self, user_id: str, new_passwd: str) -> bool:
+        sql = '''update userinfo set passwd = '%s' where account = '%s';'''
+        n = Mysql().update(sql % (new_passwd, user_id))
+        if n != 0:
+            return True
+        else:
+            return False
+    def bal(self, user_id: str, new_balance: str) -> bool:
+        sql = '''update userinfo set balance = %f where account = '%s';'''
+        n = Mysql().update(sql % (new_balance, user_id))
+        if n != 0:
+            return True
+        else:
+            return False
+    def register(self, *args) -> bool:
+        '''
+        参数列表：账户id，用户姓名，密码，手机号
+        '''
+        sql = '''insert into userinfo(account, name, passwd, phone, balance) values('%s', '%s', '%s', '%s', %f);'''
+        n = Mysql().update(sql % (args[0], args[1], args[2], args[3], 0.0))
+        if n != 0:
+            return True
+        else:
+            return False
 
 ## 定义密码输入加密类
 # class Getch:
@@ -226,7 +129,7 @@ class Getch_Windows:
 #             termios.tcsetattr(fd, termios.TCSADRAIN, old)
 #         return passwd
 
-class mysql:
+class Mysql:
     def __init__(self):
         pass
     ## 创建mysql连接
@@ -242,14 +145,14 @@ class mysql:
                                                         passwd = '123456', 
                                                         db = 'woniuATM', 
                                                         charset = 'utf8', 
-                                                        cursorclass = pymysql.cursors.DictCursor)
+                                                        cursorclass = pymysql.cursors.DictCursor)       # cursorclass指定：游标返回的结果以字典形式返回
             cursor = connection.cursor()
         except Exception as e:
             print('数据库连接失败！' + e)
             return False
         finally:
             return cursor, connection
-    def select_oneback(self, select: str) -> str:
+    def select_oneback(self, select: str) -> dict:
         '''
         执行一条select语句，并返回一行结果
         '''
@@ -297,32 +200,32 @@ class mysql:
         finally:
             cursor.close()
             connection.close()
-    def update_noback(self, up: str) -> bool:
+    def update(self, up: str) -> bool:
         '''
         执行一条update语句，返回是否成功
         '''
         import pymysql
         try:
             cursor, connection = self.connet()
-            cursor.execute(up)
+            n = cursor.execute(up)
             connection.commit()
-            return True
+            return n
         except:
             connection.rollback()
             return False
         finally:
             cursor.close()
             connection.close()
-    def create_noback(self, create: str) -> bool:
+    def create(self, create: str) -> bool:
         '''
         执行一条create语句，返回是否成功
         '''
         import pymysql
         try:
             cursor, connection = self.connet()
-            cursor.execute(create)
+            n = cursor.execute(create)
             connection.commit()
-            return True
+            return n
         except:
             connection.rollback()
             return False
@@ -337,22 +240,41 @@ class mysql:
         create_1 = '''
         create table if not exists userinfo(
         id int auto_increment primary key,
-        account char(5) unique not null,
+        account varchar(5) unique not null,
         name varchar(20) not null,
-        passwd char(32) not null,
-        phone char(11) not null,
+        passwd varchar(32) not null,
+        phone varchar(11) not null,
         balance double not null
         )engine=innodb character set utf8;
         '''
         create_2 = '''
         create table if not exists record(
         id int auto_increment primary key,
-        account char(5) unique not null,
+        account varchar(5) not null,
         dt datetime not null,
-        event char(4) not null,
+        event varchar(10) not null,
         money double,
-        targetaccount char(5),
         curbalance double
+        )engine=innodb character set utf8;
+        '''
+        create_3 = '''
+        create table if not exists transrecord(
+        id int auto_increment primary key,
+        account varchar(5) not null,
+        dt datetime not null,
+        event varchar(10) not null,
+        type varchar(10),
+        taraccount varchar(5),
+        money double,
+        curbalance double
+        )engine=innodb character set utf8;
+        '''
+        create_4 = '''
+        create table if not exists log(
+        id int auto_increment primary key,
+        account varchar(5) not null,
+        dt datetime not null,
+        event varchar(10) not null
         )engine=innodb character set utf8;
         '''
         insert_1 = '''
@@ -360,7 +282,11 @@ class mysql:
          ('10002', '黄俊', 'e10adc3949ba59abbe56e057f20f883e', '13880872992', 1000000.0),
          ('10003', 'guest', 'fcf41657f02f88137a1bcf068a32c0a3', '13880872992', 500000.0);
         '''
-        self.create_noback(create_1)
-        self.create_noback(create_2)
+        self.create(create_1)
+        self.create(create_2)
+        self.create(create_3)
+        self.create(create_4)
         self.insert_IDback(insert_1)
 
+if __name__ == "__main__":
+    Mysql().set_default()

@@ -22,8 +22,7 @@ if __name__ == '__main__':  # 程序主入口
         if first_choice == '1':
             reg_user = atmfunction.register()
             if reg_user != None:
-            # info.append(reg_user.query_list())
-                print('%s，恭喜你注册成功，请重新登录！' % reg_user.query_name())
+                print('%s，恭喜你注册成功，请重新登录！' % reg_user)
                 time.sleep(3)
                 continue
             else:
@@ -52,13 +51,10 @@ if __name__ == '__main__':  # 程序主入口
         else:   # 高级账户
             super_user = atmfunction.login(first_choice)
             if super_user == 1:
-                from atmclass import Jsonoperate
-                filename = r'.\user.info'
+                from atmclass import Mysql
                 print('以下是本机注册所有账户信息！')
-                print(atmfunction.id_docker(Jsonoperate(filename).jread()))
-                print(atmfunction.name_docker(Jsonoperate(filename).jread()))
-                print(atmfunction.passwd_docker(Jsonoperate(filename).jread()))
-                print(atmfunction.balance_docker(Jsonoperate(filename).jread()))
+                for i in Mysql().select_allback('select * from userinfo'):
+                    print('账户id：' + i['account'] + '\t姓名：' + i['name'] + '\t电话：' + i['phone'] + '\t余额：' + str(i['balance'] / 1000))
                 print('5s后返回主菜单，请及时确认！')
                 time.sleep(5)
             else:

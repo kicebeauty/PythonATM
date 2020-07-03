@@ -169,7 +169,7 @@ def deposits(account: str) -> None:
                 if result:
                     user_info_check = Mysql().select_oneback(select % account)
                     print('账号：%s\t存款成功，已存入%.2f，余额%.2f\n' % (account, save, user_info_check['balance'] / 1000))     #控制精度
-                    Statement().balappend(account, '存入', save, user_info_check['balance'])
+                    Statement().balappend(account, '存入', save, user_info_check['balance'] / 1000)
                 else:
                     Statement().balerror(account, '存入失败')
                 break
@@ -195,7 +195,7 @@ def withdraw(account: str) -> None:
                     user_info_check = Mysql().select_oneback(select % account)
                     if result:
                         print('账号：%s\t取款成功，已取出%.2f，余额%.2f\n' % (account, take, user_info_check['balance'] / 1000)) #控制精度
-                        Statement().balappend(account, '取出', take, user_info_check['balance'])
+                        Statement().balappend(account, '取出', take, user_info_check['balance'] / 1000)
                     else:
                         Statement().balerror(account, '取出失败')
                     break
@@ -258,42 +258,60 @@ def trans_balance(account: str) -> None:
             continue
 
 def query_journal(account: str) -> None:
-    start_time = input('请输入起始年月日（格式YYYY-MM-DD，不输入则直接按回车）：')
-    end_time = input('请输入结束年月日（格式YYYY-MM-DD，不输入则直接按回车）：')
-    journal_type = input('请输入要查看的记录类型（1：存取款\t2：转账\t3：日志）：')
+    from datetime import datetime
+    start_time = datetime.strptime(input('请输入起始年月日（格式YYYY-MM-DD，不清楚则直接按回车）：'), '%Y-%m-%d')
+    end_time = datetime.strptime(input('请输入结束年月日（格式YYYY-MM-DD，不清楚则直接按回车）：'), '%Y-%m-%d)
+    journal_type = input('请输入要查看的记录类型（1：存取款   2：转账   3：日志）：')
     if journal_type == '1':
-        select = '''select * from (select account, dt, event, type, money, taraccount, curbalance from transrecord where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
+        select = '''select * from (select account, dt, event, type, taraccount, money, curbalance from transrecord where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
     elif journal_type == '2':
-        select = '''select * from (select account, dt, event from record where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
+        select = '''select * from (select account, dt, event, money, curbalance from record where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
     elif journal_type == '3':
-        select = '''select * from (select account, dt, event, money, curbalance from log where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
+        select = '''select * from (select account, dt, event from log where account = "%s" order by dt desc limit 10) as a order by a.dt asc limit 10;'''
     else:
         print('输入错误，请重试！')
         return False
     journal = Mysql().select_allback(select % account)
+    print('\n')
+    ## 根据不同时间的输入情况，打印不同行数的日志
     if start_time == '' and end_time == '':     # 不输入默认按时间显示最后10行
-        # *item = [journal]
-        print('')
         for i in journal:
             for j in i:
                 if i[j] == None:
                     print(' ',end='\t')
                 else:
-                    print('%s：%s' % (j, str(i[j])), end='\t')
-                # print('%s\t%s\t%s\t%.2f\t%s\t%.2f' % (account, i['dt'], i['event'], str(i['type']), str(i['money']), str(i['targetaccount']), str(i['curbalance'])))
+                    print('%s' % (str(i[j])), end='\t')
             print('\n')
-    elif start_time == '' and end_time != '':       # 输入起始时间，不输入结束时间，默认结束到当日
+    elif start_time != '' and end_time == '':       # 输入起始时间，不输入结束时间，默认结束到当日
         for i in journal:
-             
-            for j in i:
-                if i[j] == None:
-                    print(' ',end='\t')
-                else:
-                    print('%s：%s' % (j, str(i[j])), end='\t')
-    elif start_time != '' and end_time == '':       # 输入结束时间，不输入起始时间，默认最开始到结束时间所有日志
-        pass
-    elif start_time == '' and end_time == '':
-        pass
+            if start_time <= i['dt']:
+                for j in i:
+                    if i[j] == None:
+                        print(' ',end='\t')
+                    else:
+                        print('%s' % (str(i[j])), end='\t')
+            else:
+                continue
+    elif start_time == '' and end_time != '':       # 输入结束时间，不输入起始时间，默认最开始到结束时间所有日志
+        for i in journal:
+            if i['dt'] <= end_time:
+                for j in i:
+                    if i[j] == None:
+                        print(' ',end='\t')
+                    else:
+                        print('%s' % (str(i[j])), end='\t')
+            else:
+                continue
+    elif start_time != '' and end_time != '':
+        for i in journal:
+            if start_time <= i['dt'] <= end_time:
+                for j in i:
+                    if i[j] == None:
+                        print(' ',end='\t')
+                    else:
+                        print('%s' % (str(i[j])), end='\t')
+            else:
+                continue
     else:
         print('您输入的时间范围内，没有可以显示的内容......')
 
@@ -321,7 +339,7 @@ def menu(account: str) -> None:
         elif choice == '7':   # 用户选择退出系统
             return 'exit_safe'
         else:
-            return 'exit_unsafe'    # 先随便返回一个值占位，以后说不定有其他内容
+            continue
 
 
 
